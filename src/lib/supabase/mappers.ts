@@ -25,7 +25,7 @@ export function mapAccountRow(row: AccountRow | Record<string, unknown>): Stored
   const r = row as AccountRow
   return {
     accountId: r.account_id,
-    accessToken: r.access_token,
+    accessToken: r.access_token ?? '',
     scope: r.scope,
     installedAt: r.installed_at,
     updatedAt: r.updated_at,

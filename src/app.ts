@@ -5,6 +5,7 @@ import { env } from './config/env.js'
 import { errorMiddleware } from './middleware/error.middleware.js'
 import { healthRoutes } from './routes/health.routes.js'
 import { authRoutes } from './routes/auth.routes.js'
+import { boardsRoutes } from './routes/boards.routes.js'
 import { digestsRoutes } from './routes/digests.routes.js'
 import { webhooksRoutes } from './routes/webhooks.routes.js'
 
@@ -24,6 +25,7 @@ export function createApp() {
 
   app.use('/api', healthRoutes)
   app.use('/api', authRoutes)
+  app.use('/api', boardsRoutes)
   app.use('/api', digestsRoutes)
   app.use('/api', webhooksRoutes)
 

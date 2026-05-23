@@ -1,5 +1,6 @@
 import { Router, type Request } from 'express'
 import { z } from 'zod'
+import { accountService } from '../services/account.service.js'
 import { digestRepository } from '../repositories/digest.repository.js'
 import {
   mondaySessionMiddleware,
@@ -51,6 +52,7 @@ digestsRoutes.post('/digests', async (req, res, next) => {
     if (!parsed.success) {
       throw new AppError(parsed.error.message, 400, 'VALIDATION_ERROR')
     }
+    await accountService.ensureAccountExists(monday.accountId)
     const digest = await digestRepository.create(monday.accountId, parsed.data)
     res.status(201).json(digest)
   } catch (error) {

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { env, mondayConfig } from '../../config/env.js'
+import { formatMondayAuthHeader } from './auth-header.js'
 import { AppError } from '../errors.js'
 
 type GraphQLResponse<T> = {
@@ -17,7 +18,7 @@ export async function mondayGraphQL<T>(
     { query, variables },
     {
       headers: {
-        Authorization: accessToken,
+        Authorization: formatMondayAuthHeader(accessToken),
         'Content-Type': 'application/json',
         'API-Version': '2024-10',
       },
