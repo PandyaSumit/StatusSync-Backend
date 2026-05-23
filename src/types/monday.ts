@@ -1,4 +1,4 @@
-/** Payload inside sessionToken JWT (verified with MONDAY_CLIENT_SECRET). */
+/** Normalized session context after verifying monday sessionToken JWT. */
 export type MondaySessionPayload = {
   accountId: number
   userId: number
