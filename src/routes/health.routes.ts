@@ -1,12 +1,19 @@
 import { Router } from 'express'
-import { mondayConfig } from '../config/env.js'
+import { checkSupabaseConnection } from '../lib/supabase/admin.js'
+import { mondayConfig, supabaseConfig } from '../config/env.js'
 
 export const healthRoutes = Router()
 
-healthRoutes.get('/health', (_req, res) => {
+healthRoutes.get('/health', async (_req, res) => {
+  const supabaseConnected = supabaseConfig.isConfigured
+    ? await checkSupabaseConnection()
+    : false
+
   res.json({
     status: 'ok',
     service: 'statussync-api',
     mondayOAuthConfigured: mondayConfig.isOAuthConfigured,
+    supabaseConfigured: supabaseConfig.isConfigured,
+    supabaseConnected,
   })
 })

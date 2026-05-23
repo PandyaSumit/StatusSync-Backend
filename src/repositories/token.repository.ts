@@ -1,52 +1,48 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import path from 'node:path'
+import { getSupabaseAdmin } from '../lib/supabase/admin.js'
+import { mapAccountRow } from '../lib/supabase/mappers.js'
 import type { StoredAccountToken } from '../types/monday.js'
-
-const DATA_DIR = path.join(process.cwd(), 'data')
-const TOKENS_FILE = path.join(DATA_DIR, 'account-tokens.json')
-
-type TokenStore = Record<string, StoredAccountToken>
-
-async function readStore(): Promise<TokenStore> {
-  try {
-    const raw = await readFile(TOKENS_FILE, 'utf-8')
-    return JSON.parse(raw) as TokenStore
-  } catch {
-    return {}
-  }
-}
-
-async function writeStore(store: TokenStore): Promise<void> {
-  await mkdir(DATA_DIR, { recursive: true })
-  await writeFile(TOKENS_FILE, JSON.stringify(store, null, 2), 'utf-8')
-}
 
 export const tokenRepository = {
   async save(accountId: number, accessToken: string, scope: string): Promise<void> {
-    const store = await readStore()
-    const key = String(accountId)
-    const existing = store[key]
+    const supabase = getSupabaseAdmin()
+    const { data: existing } = await supabase
+      .from('monday_accounts')
+      .select('installed_at')
+      .eq('account_id', accountId)
+      .maybeSingle()
+
     const now = new Date().toISOString()
+    const { error } = await supabase.from('monday_accounts').upsert(
+      {
+        account_id: accountId,
+        access_token: accessToken,
+        scope,
+        installed_at: existing?.installed_at ?? now,
+        updated_at: now,
+      },
+      { onConflict: 'account_id' },
+    )
 
-    store[key] = {
-      accountId,
-      accessToken,
-      scope,
-      installedAt: existing?.installedAt ?? now,
-      updatedAt: now,
-    }
-
-    await writeStore(store)
+    if (error) throw error
   },
 
   async getByAccountId(accountId: number): Promise<StoredAccountToken | null> {
-    const store = await readStore()
-    return store[String(accountId)] ?? null
+    const { data, error } = await getSupabaseAdmin()
+      .from('monday_accounts')
+      .select('*')
+      .eq('account_id', accountId)
+      .maybeSingle()
+
+    if (error) throw error
+    return data ? mapAccountRow(data) : null
   },
 
   async delete(accountId: number): Promise<void> {
-    const store = await readStore()
-    delete store[String(accountId)]
-    await writeStore(store)
+    const { error } = await getSupabaseAdmin()
+      .from('monday_accounts')
+      .delete()
+      .eq('account_id', accountId)
+
+    if (error) throw error
   },
 }

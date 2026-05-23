@@ -14,6 +14,8 @@ const envSchema = z.object({
     .string()
     .default('boards:read,boards:write,account:read,users:read'),
   MONDAY_API_TOKEN: z.string().optional(),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   DATABASE_URL: z.string().optional(),
   REDIS_URL: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
@@ -28,6 +30,12 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data
+
+export const supabaseConfig = {
+  get isConfigured() {
+    return Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY)
+  },
+}
 
 export const mondayConfig = {
   get isOAuthConfigured() {
