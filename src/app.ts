@@ -14,7 +14,8 @@ export function createApp() {
   app.use(helmet())
   app.use(
     cors({
-      origin: [env.FRONTEND_URL, /\.monday\.com$/],
+      // Board views: iframe on *.monday.com; client-side CDN builds use *.monday.app
+      origin: [env.FRONTEND_URL, /\.monday\.com$/, /\.monday\.app$/],
       credentials: true,
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Monday-Session-Token'],
     }),
