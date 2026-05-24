@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { randomBytes } from 'node:crypto'
-import { env, mondayConfig } from '../config/env.js'
+import { env, getOAuthConfigurationIssues, mondayConfig } from '../config/env.js'
 import { buildMondayAuthorizeUrl } from '../lib/monday/oauth.js'
 import { mondayAuthService } from '../services/monday-auth.service.js'
 import { AppError } from '../lib/errors.js'
@@ -38,21 +38,50 @@ authRoutes.get('/auth/monday/callback', async (req, res, next) => {
     if (typeof state === 'string') oauthStates.delete(state)
 
     const { accountId } = await mondayAuthService.handleOAuthCallback(code)
-    const redirect = new URL(env.FRONTEND_URL)
-    redirect.searchParams.set('monday_auth', 'success')
-    redirect.searchParams.set('account_id', String(accountId))
-    res.redirect(redirect.toString())
+
+    // Private app testing: show success page (no marketplace / separate frontend needed)
+    res.send(`<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>StatusSync authorized</title>
+<style>body{font-family:system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;background:#fafafa;margin:0}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:24px 28px;max-width:420px;text-align:center}
+h1{font-size:18px;margin:0 0 8px}p{color:#6b7280;font-size:14px;margin:0 0 16px;line-height:1.5}</style></head>
+<body><div class="card"><h1>StatusSync authorized</h1>
+<p>OAuth is complete for account ${accountId}. Close this tab and refresh StatusSync in monday.com.</p>
+<script>setTimeout(()=>window.close(),4000)</script></div></body></html>`)
   } catch (error) {
     next(error)
   }
 })
 
 authRoutes.get('/auth/status', (_req, res) => {
+  const issues = getOAuthConfigurationIssues()
+  const appUrl = env.APP_URL.replace(/\/$/, '')
   res.json({
     oauthConfigured: mondayConfig.isOAuthConfigured,
     redirectUri: mondayConfig.redirectUri,
-    authorizeUrl: `${env.APP_URL}/api/auth/monday`,
+    authorizeUrl: `${appUrl}/api/auth/monday`,
     scopes: mondayConfig.scopes,
     appVersionId: mondayConfig.appVersionId ?? null,
+    appId: mondayConfig.appId,
+    appUrl: env.APP_URL,
+    configurationOk: issues.length === 0,
+    issues,
+  privateTesting: {
+      marketplaceRequired: false,
+      steps: [
+        'Developer Center → OAuth & Permissions → add redirect URL + scopes',
+        'Developer Center → App versions → Promote your version to live',
+        'Developer Center → Distribute → Install app (on your account)',
+        'Open Authorize link to complete OAuth',
+      ],
+      developerCenterUrl: `https://developer.monday.com/apps/${mondayConfig.appId}`,
+      installPath: 'Developer Center → Distribute → Install app',
+      promotePath: 'Developer Center → App versions → Promote to live',
+    },
+    developerCenter: {
+      redirectUrlsPath: 'Developer Center → StatusSync → OAuth & Permissions → Redirect URLs',
+      requiredRedirectUri: mondayConfig.redirectUri,
+      requiredScopes: mondayConfig.scopes,
+    },
   })
 })
