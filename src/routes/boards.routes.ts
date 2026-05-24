@@ -31,6 +31,21 @@ boardsRoutes.get('/me', async (req, res, next) => {
   }
 })
 
+boardsRoutes.get('/boards', async (req, res, next) => {
+  try {
+    const monday = getMonday(req)
+    const workspaceId =
+      typeof req.query.workspaceId === 'string' ? req.query.workspaceId : undefined
+
+    const boards = await mondayBoardService.listBoards(monday.accountId, {
+      workspaceId,
+    })
+    res.json(boards)
+  } catch (error) {
+    next(error)
+  }
+})
+
 boardsRoutes.get('/boards/:boardId/summary', async (req, res, next) => {
   try {
     const monday = getMonday(req)

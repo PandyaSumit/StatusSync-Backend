@@ -33,6 +33,14 @@ const BOARD_SUMMARY_QUERY = `
   }
 `
 
+export type BoardListItem = {
+  id: string
+  name: string
+  state: string
+  workspaceId: string | null
+  workspaceName: string | null
+}
+
 export type BoardItemSummary = {
   id: string
   name: string
@@ -96,7 +104,56 @@ function mapItem(
   }
 }
 
+const LIST_BOARDS_QUERY = `
+  query ListBoards($workspaceIds: [ID], $limit: Int) {
+    boards(workspace_ids: $workspaceIds, limit: $limit) {
+      id
+      name
+      state
+      workspace {
+        id
+        name
+      }
+    }
+  }
+`
+
+type ListBoardsGraphQL = {
+  boards: Array<{
+    id: string
+    name: string
+    state: string
+    workspace: { id: string; name: string } | null
+  }>
+}
+
 export const mondayBoardService = {
+  async listBoards(
+    accountId: number,
+    options?: { workspaceId?: string; limit?: number },
+  ): Promise<BoardListItem[]> {
+    const accessToken = await resolveAccessToken(accountId)
+    const limit = options?.limit ?? 100
+    const workspaceIds = options?.workspaceId ? [options.workspaceId] : undefined
+
+    const data = await mondayGraphQL<ListBoardsGraphQL>(
+      LIST_BOARDS_QUERY,
+      { workspaceIds, limit },
+      accessToken,
+    )
+
+    return data.boards
+      .filter((board) => board.state === 'active')
+      .map((board) => ({
+        id: board.id,
+        name: board.name,
+        state: board.state,
+        workspaceId: board.workspace?.id ?? null,
+        workspaceName: board.workspace?.name ?? null,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  },
+
   async getBoardSummary(accountId: number, boardId: string): Promise<BoardSummary> {
     const accessToken = await resolveAccessToken(accountId)
     const data = await mondayGraphQL<BoardGraphQL>(
