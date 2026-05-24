@@ -6,7 +6,7 @@ import {
   type MondayAuthenticatedRequest,
 } from '../middleware/monday-session.middleware.js'
 import { AppError } from '../lib/errors.js'
-import { env } from '../config/env.js'
+import { env, mondayConfig } from '../config/env.js'
 
 export const boardsRoutes = Router()
 
@@ -25,6 +25,7 @@ boardsRoutes.get('/me', async (req, res, next) => {
       userId: monday.userId,
       hasOAuthToken,
       oauthInstallUrl: `${env.APP_URL}/api/auth/monday`,
+      oauthRedirectUri: mondayConfig.redirectUri,
     })
   } catch (error) {
     next(error)

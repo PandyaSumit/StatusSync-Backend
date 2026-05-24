@@ -7,11 +7,15 @@ export function buildMondayAuthorizeUrl(state: string): string {
   const params = new URLSearchParams({
     client_id: mondayConfig.clientId,
     redirect_uri: mondayConfig.redirectUri,
+    scope: mondayConfig.scopes.join(' '),
     state,
+    force_install_if_needed: 'true',
   })
-  for (const scope of mondayConfig.scopes) {
-    params.append('scope', scope)
+
+  if (mondayConfig.appVersionId) {
+    params.set('app_version_id', mondayConfig.appVersionId)
   }
+
   return `${mondayConfig.authorizeUrl}?${params.toString()}`
 }
 

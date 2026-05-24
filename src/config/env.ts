@@ -10,6 +10,7 @@ const envSchema = z.object({
   MONDAY_CLIENT_SECRET: z.string().optional(),
   MONDAY_SIGNING_SECRET: z.string().optional(),
   MONDAY_REDIRECT_URI: z.string().url().optional(),
+  MONDAY_APP_VERSION_ID: z.string().optional(),
   MONDAY_OAUTH_SCOPES: z
     .string()
     .default('boards:read,boards:write,account:read,users:read'),
@@ -55,6 +56,9 @@ export const mondayConfig = {
       env.MONDAY_REDIRECT_URI ??
       `${env.APP_URL}/api/auth/monday/callback`
     )
+  },
+  get appVersionId() {
+    return env.MONDAY_APP_VERSION_ID
   },
   scopes: env.MONDAY_OAUTH_SCOPES.split(',').map((s) => s.trim()).filter(Boolean),
   authorizeUrl: 'https://auth.monday.com/oauth2/authorize',

@@ -51,6 +51,8 @@ authRoutes.get('/auth/status', (_req, res) => {
   res.json({
     oauthConfigured: mondayConfig.isOAuthConfigured,
     redirectUri: mondayConfig.redirectUri,
+    authorizeUrl: `${env.APP_URL}/api/auth/monday`,
     scopes: mondayConfig.scopes,
+    appVersionId: mondayConfig.appVersionId ?? null,
   })
 })
